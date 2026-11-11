@@ -1,0 +1,40 @@
+
+
+# Python bytecode and caches
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Packaging and build artifacts
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# Local environment / editor files
+.DS_Store
+.vscode/
+.idea/
+
+# Test and coverage output
+.coverage
+.coverage.*
+htmlcov/
+
+# Data and results generated locally
+results/
+data/
+
+# Jupyter notebooks
+.ipynb_checkpoints/
+Project_Proposal_Final.pdf
