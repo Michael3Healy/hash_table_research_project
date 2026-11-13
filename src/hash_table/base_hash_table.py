@@ -1,124 +1,127 @@
-"""Base interface and shared behavior for all open-addressing hash table variants.
 
-Planned contents for this file:
-- shared constructor for table capacity, load factor, and collision metadata
-- common helper methods for hashing and slot validation
-- abstract or base methods for insert, lookup, and delete if needed
-- probe counting and statistics tracking
-- support for table occupancy calculations and resizing safeguards
-- common validation rules shared across implementations
+# Base interface and shared behavior for linear probing, quadratic probing, and double hashing.
 
-This module should define the contract each strategy follows, without implementing any specific collision strategy.
-"""
-
-# 1. BaseHashTable class definition
-# 2. table state and slot representation
-# 3. hash function interface
-# 4. insert and lookup contract
-# 5. probe statistics tracking
-# 6. validation and occupancy helpers
-
-# References: https://www.geeksforgeeks.org/dsa/program-to-implement-hash-table-using-open-addressing/
-
-
+# Node that will store value at idx determined by key, hash function, and collision strategy
 class HashNode:
     def __init__(self, key: int, value: int):
         self.key = key
         self.value = value
 
-# Constants
-capacity = 20
-size = 0
+class BaseHashTable:
+    def __init__(self, capacity):
+        self.capacity = capacity
+        self.size = 0
+        self.slot_array = [None] * capacity
+        self.deleted_marker = HashNode(-1, -1)
+        self.last_probe_count = 0
 
-# Array for HashNode
-arr = [None] * capacity
+    # Implemented by subclasses with the appropriate collision resolution strategy
+    def _probe_index(self, key, attempt):
+        raise NotImplementedError
 
-# Dummy node
-dummy = HashNode(-1, -1)
+    def get_load_factor(self):
+        return self.size / self.capacity
 
-# Function to add key value pair
-def insert(key: int, value: int):
-    global size
-    temp = HashNode(key, value)
+    # Inserts element into hash table. Calls strategy-specific probe index function if there is a collision
+    def insert(self, key, value):
 
-    # Apply hash function to find index for given key
-    hash_index = key % capacity
-    
-    # Find next free space
-    while arr[hash_index] is not None and arr[hash_index].key != key and arr[hash_index].key != -1:
-        hash_index += 1
-        hash_index %= capacity
-    
-    # If new node to be inserted increase the current size
-    if arr[hash_index] is None or arr[hash_index].key == -1:
-        size += 1
-    
-    arr[hash_index] = temp
+        # Set probe count to 0 so that probes can measured for THIS call alone. Caller needs to read last_probe_count immediately after execution before calling another method
+        self.last_probe_count = 0
 
-# Function to delete a key value pair
-def delete_key(key: int):
-    global size
-    hash_index = key % capacity
+        # Hash function
+        idx = key % self.capacity
 
-    # Finding the node with given key
-    while arr[hash_index] is not None:
-        # if node found
-        if arr[hash_index].key == key:
-            # Insert dummy node here for further use
-            arr[hash_index] = dummy
+        # If there isn't anything at that index, insert the new node there
+        if self.slot_array[idx] is None:
+            self.last_probe_count += 1
+            self.slot_array[idx] = HashNode(key, value)
+            self.size += 1
+            return True
+        else:
+            self.last_probe_count += 1
+            i = 1
+
+            # For as many possible locations there are, use collision strategy to find next open index and assign there or return False
+            while i <= self.capacity:
+                candidate_idx = self._probe_index(key, i)
+                if self.slot_array[candidate_idx] is None or self.slot_array[candidate_idx] == self.deleted_marker:
+                    self.last_probe_count += 1
+                    self.slot_array[candidate_idx] = HashNode(key, value)
+                    self.size += 1
+                    return True
+                elif self.slot_array[candidate_idx].key == key:
+                    self.last_probe_count += 1
+                    self.slot_array[candidate_idx] = HashNode(key, value)
+                    return True
+                else:
+                    self.last_probe_count += 1
+                    i += 1
+            return False
+
             
-            # Reduce size
-            size -= 1
+
+    # Find value from key. Returns HashNode or False if it doesn't exist
+    def find(self, key):
+
+        # Set probe count to 0 so that probes can measured for THIS call alone. Caller needs to read last_probe_count immediately after execution before calling another method
+        self.last_probe_count = 0
+        hash_idx = key % self.capacity
+
+        # Return false immediately if HashNode doesn't exist at the hashed index
+        if self.slot_array[hash_idx] == None:
+            self.last_probe_count += 1
+            return False
+        elif self.slot_array[hash_idx].key == key:
+            self.last_probe_count += 1
+            return self.slot_array[hash_idx]
+        else:
+            self.last_probe_count += 1
+            i = 1
+            while i <= self.capacity:
+                candidate_idx = self._probe_index(key, i)
+                if self.slot_array[candidate_idx] is None:
+                    self.last_probe_count += 1
+                    return False
+                elif self.slot_array[candidate_idx].key == key:
+                    self.last_probe_count += 1
+                    return self.slot_array[candidate_idx]
+                else:
+                    self.last_probe_count += 1
+                    i += 1
+            return False
+
+
+    # Deletes value from key
+    def delete(self, key):
+
+        # Set probe count to 0 so that probes can measured for THIS call alone. Caller needs to read last_probe_count immediately after execution before calling another method
+        self.last_probe_count = 0
+
+        hash_idx = key % self.capacity
+        if self.slot_array[hash_idx] is None:
+            self.last_probe_count += 1
+            return False
+        elif self.slot_array[hash_idx].key == key:
+            self.last_probe_count += 1
+            self.slot_array[hash_idx] = self.deleted_marker
+            self.size -= 1
+            return True
+        else:
+            self.last_probe_count += 1
+            # Use probing strategy to check other indices for key and delete there
+            i = 1
+            while i <= self.capacity:
+                candidate_idx = self._probe_index(key, i)
+                if self.slot_array[candidate_idx] is None:
+                    self.last_probe_count += 1
+                    return False
+                elif self.slot_array[candidate_idx].key == key:
+                    self.last_probe_count += 1
+                    self.slot_array[candidate_idx] = self.deleted_marker
+                    self.size -= 1
+                    return True
+                else:
+                    self.last_probe_count += 1
+                    i += 1
+            return False
             
-            # Return the value of the key
-            return 1
-        hash_index += 1
-        hash_index %= capacity
-    
-    # If not found return null
-    return 0
-
-# Function to search the value for a given key
-def find(key: int):
-    global size
-    hash_index = key % capacity
-    counter = 0
-    
-    # Find the node with given key
-    while arr[hash_index] is not None:
-        if counter > capacity:
-            break
-        
-        # If node found return its value
-        if arr[hash_index].key == key:
-            return arr[hash_index].value
-        
-        hash_index += 1
-        hash_index %= capacity
-        counter += 1
-    
-    # If not found return -1
-    return -1
-
-# Driver code
-if __name__ == "__main__":
-    # Space allocation
-    insert(1, 5)
-    insert(2, 15)
-    insert(3, 20)
-    insert(4, 7)
-    if find(4) != -1:
-        print("Value of Key 4 = ", find(4))
-    else:
-        print("Key 4 does not exists")
-    
-    if delete_key(4):
-        print("Node value of key 4 is deleted successfully")
-    else:
-        print("Key does not exists")
-    
-    if find(4) != -1:
-        print("Value of Key 4 = ", find(4))
-    else:
-        print("Key 4 does not exists")
-
