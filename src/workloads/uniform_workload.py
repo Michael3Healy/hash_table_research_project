@@ -1,16 +1,30 @@
-"""Uniform workload generator.
+"""Generate a workload with approximately uniform starting hash slots."""
 
-Planned contents for this file:
-- generation of keys whose initial hash positions are distributed evenly
-- logic to create a balanced input table layout for fair comparison
-- optional support for integer or string key generation
-- workload metadata such as expected distribution and size
+import random
 
-This file will specifically model the approximately uniform distribution described in the project proposal.
-"""
+from .generator import check_inputs, make_keys, workload_info
 
-# File outline only: no implementation code.
-# 1. generate_uniform_keys() concept
-# 2. balanced distribution logic
-# 3. metadata capture for the workload
-# 4. validation of uniformity assumptions
+
+def generate_uniform_keys(table_size, num_keys, seed=42,
+                          return_metadata=False):
+    """Return unique keys whose starting slots are chosen uniformly.
+
+    Slots are selected with replacement, so normal random collisions
+    can still happen. Using the same seed gives the same keys again.
+    """
+    check_inputs(table_size, num_keys)
+    rng = random.Random(seed)
+
+    slots = []
+    for _ in range(num_keys):
+        slots.append(rng.randrange(table_size))
+
+    keys = make_keys(slots, table_size, rng)
+
+    if return_metadata:
+        info = workload_info(keys, table_size)
+        info["workload_type"] = "uniform"
+        info["seed"] = seed
+        return keys, info
+
+    return keys
