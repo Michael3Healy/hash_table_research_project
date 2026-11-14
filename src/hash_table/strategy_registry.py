@@ -1,16 +1,40 @@
-"""Strategy registry for selecting a collision-resolution implementation.
+"""Choose which collision strategy to use for a hash table."""
 
-Planned contents for this file:
-- mapping from strategy names such as linear, quadratic, and double to class implementations
-- a factory function that returns the correct table instance based on configuration
-- validation for unsupported strategy names
-- optional helper for listing all available collision strategies
+from .linear_probing import LinearProbingHashTable
+from .quadratic_probing import QuadraticProbingHashTable
+from .double_hashing import DoubleHashingHashTable
 
-This file should stay focused on strategy selection and not contain the benchmarking logic.
-"""
 
-# File outline only: no implementation code.
-# 1. strategy lookup dictionary
-# 2. factory creation function
-# 3. validation of known strategies
-# 4. selection of concrete hash table subclasses
+# Each name points to the class that implements that strategy.
+STRATEGIES = {
+    "linear": LinearProbingHashTable,
+    "quadratic": QuadraticProbingHashTable,
+    "double": DoubleHashingHashTable,
+}
+
+
+def list_strategies():
+    """Return the names of the available collision strategies."""
+    return list(STRATEGIES.keys())
+
+
+def get_strategy(strategy_name):
+    """Find the hash table class that matches a strategy name."""
+    if not isinstance(strategy_name, str):
+        raise ValueError("Strategy name must be a string")
+
+    strategy_name = strategy_name.strip().lower()
+
+    if strategy_name not in STRATEGIES:
+        raise ValueError("Unknown strategy. Choose linear, quadratic, or double")
+
+    return STRATEGIES[strategy_name]
+
+
+def create_hash_table(strategy_name, capacity):
+    """Create an empty hash table using the selected strategy."""
+    if type(capacity) is not int or capacity < 2:
+        raise ValueError("Table capacity must be an integer greater than 1")
+
+    table_class = get_strategy(strategy_name)
+    return table_class(capacity)
