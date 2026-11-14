@@ -1,19 +1,4 @@
-"""Benchmarking and metric collection helpers.
-
-Planned contents for this file:
-- timing utilities for insertion and lookup operations
-- probe-count aggregation for each benchmarked action
-- averaging and summarizing metrics across repeated trials
-- helper functions for converting raw measurements into comparable statistics
-
-This file is responsible for measuring performance without determining the algorithm itself.
-"""
-
-# File outline only: no implementation code.
-# 1. timer wrappers around hash-table operations
-# 2. probe counting utilities
-# 3. aggregation of trial-level data
-# 4. summary statistics helpers
+# Benchmarking and metric collection helpers
 
 import time
 
@@ -40,10 +25,10 @@ def measure_insertions( table, keys ):
     )
     
     return {
-        "INSERTION_TIME": insertion_time, 
-        "TOTAL INSERT PROBES" : total_probes,
-        "AVERAGE INSERT PROBES" : average_probes,
-        "MAX INSERT PROBES" : max_probes
+        "insertion_time": insertion_time,
+        "total_insert_probes": total_probes,
+        "average_insert_probes": average_probes,
+        "max_insert_probes": max_probes
         }
 
 def measure_lookups( table, lookup_keys ):
@@ -69,7 +54,7 @@ def measure_lookups( table, lookup_keys ):
             unsuccessful_lookups += 1
     end_time = time.perf_counter()
     
-    looup_time = end_time - start_time
+    lookup_time = end_time - start_time
     
     average_probes = (
         total_probes / len( lookup_keys )
@@ -78,10 +63,10 @@ def measure_lookups( table, lookup_keys ):
     )
     
     return{
-        "LOOKUP TIME" : looup_time,
-        "TOTAL LOOKUP PROBES" : total_probes,
-        "AVERAGE LOOKUP PROBES" : average_probes,
-        "MAX LOOKUP PROBES" : max_probes,
-        "SUCCESSFUL LOOKUPS" : successful_lookups,
-        "UNSUCCESSFUL LOOKUPS": unsuccessful_lookups
+        "lookup_time": lookup_time,
+        "total_lookup_probes": total_probes,
+        "average_lookup_probes": average_probes,
+        "max_lookup_probes": max_probes,
+        "successful_lookups": successful_lookups,
+        "unsuccessful_lookups": unsuccessful_lookups
         }

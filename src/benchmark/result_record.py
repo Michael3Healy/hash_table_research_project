@@ -1,24 +1,5 @@
-"""Result record structure for benchmark runs.
 
-Planned contents for this file:
-- a structured record for one trial of one workload under one strategy
-- fields for workload type, strategy name, load factor, table size, and trial number
-- timing values for insertion and lookup
-- average probes and total probes for the test case
-- metadata needed for fair comparison across conditions
-
-This file should define the record format used by the benchmark runner and later analysis.
-"""
-
-# File outline only: no implementation code.
-# 1. result record schema
-# 2. required benchmark fields
-# 3. aggregated summary values
-# 4. optional serialization helpers
-
-
-
-#RESULT RECORD 
+# RESULT RECORD structure for benchmark runs
 
 from dataclasses import dataclass, asdict
 
@@ -26,10 +7,10 @@ from dataclasses import dataclass, asdict
 class ResultRecord:
     
     #EXPERIMENT CONFIG
-    stategy_name: str
-    workload_types: str
+    strategy_name: str
+    workload_type: str
     
-    tabel_size: int
+    table_size: int
     load_factor: float
     
     trial_number: int
@@ -39,7 +20,7 @@ class ResultRecord:
     lookup_time: float
     
     #PROBE STATISTICS 
-    total_insert_proes: int
+    total_insert_probes: int
     total_lookup_probes: int
     
     average_insert_probes: float
@@ -58,7 +39,7 @@ class ResultRecord:
     
     def to_dict( self ):
         return asdict( self )
-    def _str_( self ):
+    def __str__( self ):
         return (
             f"\nResultRecord(\n"
             f"  Strategy: {self.strategy_name}\n"

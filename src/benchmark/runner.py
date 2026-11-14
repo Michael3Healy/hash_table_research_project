@@ -1,31 +1,13 @@
-"""Experiment runner for the benchmark workflow.
+# Experiment runner for the benchmark workflow
 
-Planned contents for this file:
-- loop over workload types
-- loop over occupancy levels and trial counts
-- selection of strategy implementation
-- execution of insertion and lookup benchmark tasks
-- collection of raw timing and probe-count data
-- preparation of results for analysis and reporting
-
-This file defines the experiment matrix and manages the benchmark execution flow.
-"""
-
-# File outline only: no implementation code.
-# 1. run_experiment() orchestration function
-# 2. workload and occupancy iteration
-# 3. strategy execution loop
-# 4. raw metric capture
-# 5. result packaging for analysis
-
-
-
-from scr.benchmark.metrics import (
+from src.benchmark.metrics import (
     measure_insertions,
     measure_lookups
     )
-from scr.benchmark.results_record import ResultsRecord
-
+from src.benchmark.result_record import ResultRecord
+from src.hash_table.strategy_registry import create_hash_table
+from src.workloads.generator import generate_workload
+from src.config import STRATEGIES, WORKLOAD_TYPES, TABLE_SIZES, LOAD_FACTORS, NUM_TRIALS, RANDOM_SEED, SKEW_STRENGTH, HOT_FRACTION
 
 def run_trial(
     table,
@@ -102,3 +84,24 @@ def run_trial(
     )
 
     return result
+
+def run_all_trials():
+    results = []
+
+    for workload_type in WORKLOAD_TYPES:
+        for table_size in TABLE_SIZES:
+            for load_factor in LOAD_FACTORS:
+
+                # Compute num keys here because it only depends on load factor and table size
+                num_keys = round(load_factor * table_size)
+
+                for trial_number in range(NUM_TRIALS):
+                    trial_seed = RANDOM_SEED + trial_number
+                    keys = generate_workload(workload_type, table_size, num_keys, seed=trial_seed, skew_strength=SKEW_STRENGTH, hot_fraction=HOT_FRACTION)
+                    print(f'Workload type: {workload_type}\n Table size: {table_size}\n Load factor: {load_factor}\n Trial number: {trial_number}')
+                    for strategy in STRATEGIES:
+                        table = create_hash_table(strategy, table_size)
+                        result_record = run_trial(table, keys, keys, strategy, workload_type, table_size, load_factor, trial_number)
+                        results.append(result_record)
+
+    return results
