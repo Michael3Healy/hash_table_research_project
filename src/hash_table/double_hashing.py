@@ -1,19 +1,40 @@
-"""Double hashing implementation module.
+# Implementation of double hashing hash table
 
-Planned contents for this file:
-- class representing the double hashing hash table
-- primary hash function and secondary hash function definitions
-- insertion method that uses a second hash for the step size
-- lookup method using the same rule for probing
-- probe counting and strategy-specific statistics
-- handling of collisions under high occupancy
+from .base_hash_table import BaseHashTable
 
-This file should only implement the behavior unique to double hashing.
-"""
+class DoubleHashingHashTable(BaseHashTable):
 
-# File outline only: no implementation code.
-# 1. DoubleHashingHashTable class
-# 2. primary and secondary hash functions
-# 3. insert and lookup methods
-# 4. step-size logic and collision handling
-# 5. statistics and validation
+    def is_prime(self, n):
+        if n < 2:
+            return False
+        for i in range(2, n):
+            if n % i == 0:
+                return False
+        return True 
+
+    def __init__(self, capacity):
+        super().__init__(capacity)
+
+        # Make sure table capacity is prime because that helps with reducing repeated patterns when probing
+        if self.is_prime(capacity) != True:
+            raise ValueError("Table capacity must be a prime number")
+
+    # Method implemented by each collision resolution strategy individually to calculate next candidate index after collision
+    def _probe_index(self, key, attempt):
+
+        initial_index = key % self.capacity
+
+        # Number of indices after the initial one that the calculation will skip to based on the key
+        step_size = 1 + (key % (self.capacity - 1))
+
+        # New candidate index based on step size, initial index, capacity, and attempt number
+        secondary_hash_index = (initial_index + attempt * step_size) % self.capacity
+
+        return secondary_hash_index
+
+    def insert(self, key, value):
+        if self.get_load_factor() > 0.5:
+            raise ValueError("Table is already at 50% load factor")
+        else:
+            return super().insert(key, value)
+    
