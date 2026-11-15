@@ -13,3 +13,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+# AI was used in the preparation of this assignment. It was used in the following ways: brainstorming, outlining, troubleshooting for the project code.
